@@ -14,11 +14,36 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('flutter_rust_bridge quickstart')),
-        body: Center(
-          child: Text(
-            'Action: Call Rust `greet("Tom")`\nResult: `${greet(name: "Tom")}`',
-          ),
+        appBar: AppBar(title: const Text('Test Flutter / Rust cam')),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            const double maxWidth = 1200;
+            const double maxHeight = 720;
+            const double aspectRatio = maxWidth / maxHeight;
+
+            double availableWidth = constraints.maxWidth;
+            double availableHeight = constraints.maxHeight;
+
+            double width = availableWidth;
+            double height = width / aspectRatio;
+
+            if (height > availableHeight) {
+              height = availableHeight;
+              width = height * aspectRatio;
+            }
+
+            // limit to 1280x720
+            width = width.clamp(0, maxWidth);
+            height = height.clamp(0, maxHeight);
+
+            return Center(
+              child: Container(
+                width: width,
+                height: height,
+                color: Colors.blueGrey,
+              ),
+            );
+          },
         ),
       ),
     );
