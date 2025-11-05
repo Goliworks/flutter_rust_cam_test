@@ -33,6 +33,8 @@ class MyApp extends StatelessWidget {
               width = height * aspectRatio;
             }
 
+            initCam();
+
             Uint8List? image;
 
             try {

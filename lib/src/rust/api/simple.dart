@@ -11,3 +11,5 @@ String greet({required String name}) =>
 
 Uint8List getImage({required String file}) =>
     RustLib.instance.api.crateApiSimpleGetImage(file: file);
+
+Future<void> initCam() => RustLib.instance.api.crateApiSimpleInitCam();
