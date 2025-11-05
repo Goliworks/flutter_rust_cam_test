@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
 import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
 import 'package:flutter_rust_cam_test/src/rust/frb_generated.dart';
 
@@ -32,6 +33,14 @@ class MyApp extends StatelessWidget {
               width = height * aspectRatio;
             }
 
+            Uint8List? image;
+
+            try {
+              image = getImage(file: "/tmp/test.jpg");
+            } catch (e) {
+              print(e);
+            }
+
             // limit to 1280x720
             width = width.clamp(0, maxWidth);
             height = height.clamp(0, maxHeight);
@@ -41,6 +50,9 @@ class MyApp extends StatelessWidget {
                 width: width,
                 height: height,
                 color: Colors.blueGrey,
+                child: image != null
+                    ? Image.memory(image, fit: BoxFit.cover)
+                    : Center(child: Text("No image")),
               ),
             );
           },
