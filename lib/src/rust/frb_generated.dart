@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/camera.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -66,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1412607741;
+  int get rustContentHash => -1352591464;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,7 +78,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<List<Cameras>> crateApiSimpleCheckForCameras();
+  Future<List<Cameras>> crateApiCameraCheckForCameras();
 
   Uint8List crateApiSimpleGetImage({required String file});
 
@@ -85,7 +86,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiSimpleInitApp();
 
-  Future<void> crateApiSimpleInitCams();
+  Future<void> crateApiCameraInitCams();
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -97,7 +98,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<List<Cameras>> crateApiSimpleCheckForCameras() {
+  Future<List<Cameras>> crateApiCameraCheckForCameras() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -113,14 +114,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_list_cameras,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleCheckForCamerasConstMeta,
+        constMeta: kCrateApiCameraCheckForCamerasConstMeta,
         argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleCheckForCamerasConstMeta =>
+  TaskConstMeta get kCrateApiCameraCheckForCamerasConstMeta =>
       const TaskConstMeta(debugName: "check_for_cameras", argNames: []);
 
   @override
@@ -197,7 +198,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
-  Future<void> crateApiSimpleInitCams() {
+  Future<void> crateApiCameraInitCams() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -213,14 +214,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleInitCamsConstMeta,
+        constMeta: kCrateApiCameraInitCamsConstMeta,
         argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleInitCamsConstMeta =>
+  TaskConstMeta get kCrateApiCameraInitCamsConstMeta =>
       const TaskConstMeta(debugName: "init_cams", argNames: []);
 
   @protected

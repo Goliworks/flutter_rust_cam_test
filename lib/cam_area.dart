@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
+import 'package:flutter_rust_cam_test/src/rust/api/camera.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
 
 class CamArea extends StatefulWidget {
