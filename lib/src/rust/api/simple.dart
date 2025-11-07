@@ -6,10 +6,33 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`
+
 String greet({required String name}) =>
     RustLib.instance.api.crateApiSimpleGreet(name: name);
 
 Uint8List getImage({required String file}) =>
     RustLib.instance.api.crateApiSimpleGetImage(file: file);
 
-Future<void> initCam() => RustLib.instance.api.crateApiSimpleInitCam();
+Future<void> initCams() => RustLib.instance.api.crateApiSimpleInitCams();
+
+Future<List<Cameras>> checkForCameras() =>
+    RustLib.instance.api.crateApiSimpleCheckForCameras();
+
+class Cameras {
+  final String id;
+  final String name;
+
+  const Cameras({required this.id, required this.name});
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Cameras &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name;
+}
