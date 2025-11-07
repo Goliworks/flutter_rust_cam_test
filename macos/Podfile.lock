@@ -1,21 +1,41 @@
 PODS:
+  - flutter_webrtc (1.2.0):
+    - FlutterMacOS
+    - WebRTC-SDK (= 137.7151.04)
   - FlutterMacOS (1.0.0)
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - rust_lib_flutter_rust_cam_test (0.0.1):
     - FlutterMacOS
+  - WebRTC-SDK (137.7151.04)
 
 DEPENDENCIES:
+  - flutter_webrtc (from `Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
   - rust_lib_flutter_rust_cam_test (from `Flutter/ephemeral/.symlinks/plugins/rust_lib_flutter_rust_cam_test/macos`)
 
+SPEC REPOS:
+  trunk:
+    - WebRTC-SDK
+
 EXTERNAL SOURCES:
+  flutter_webrtc:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  path_provider_foundation:
+    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
   rust_lib_flutter_rust_cam_test:
     :path: Flutter/ephemeral/.symlinks/plugins/rust_lib_flutter_rust_cam_test/macos
 
 SPEC CHECKSUMS:
+  flutter_webrtc: f3000fcd54abc3fa966c77ecf7e43ab701793c64
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
   rust_lib_flutter_rust_cam_test: 2abc641197ccd2907453bc99f2741321df60c917
+  WebRTC-SDK: 40d4f5ba05cadff14e4db5614aec402a633f007e
 
 PODFILE CHECKSUM: 6c6f8fc408d7ff82341c7a8be1c93f127af8794b
 
