@@ -1,10 +1,10 @@
-// import 'dart:typed_data';
-
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 // import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
 import 'package:flutter_rust_cam_test/src/rust/api/camera.dart';
 // import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class CamArea extends StatefulWidget {
   const CamArea({super.key});
@@ -14,8 +14,10 @@ class CamArea extends StatefulWidget {
 }
 
 class _CamAreaState extends State<CamArea> {
-  List<DropdownMenuEntry<String>> dropdownList = [];
-  String? selectedItem;
+  List<DropdownMenuEntry<String>> _dropdownList = [];
+  String? _selectedItem;
+
+  Stream<Uint8List>? _camStream;
 
   @override
   void initState() {
@@ -28,44 +30,34 @@ class _CamAreaState extends State<CamArea> {
 
     checkForCameras().then((List<Cameras> cams) {
       for (Cameras cam in cams) {
-        dropdownList.add(DropdownMenuEntry(label: cam.name, value: cam.id));
+        _dropdownList.add(DropdownMenuEntry(label: cam.name, value: cam.id));
       }
       setState(() {
-        dropdownList = cams.map((cam) {
+        _dropdownList = cams.map((cam) {
           return DropdownMenuEntry(label: cam.name, value: cam.id);
         }).toList();
       });
     });
   }
 
-  RTCVideoRenderer? _renderer;
-  // MediaStream? _stream;
-
-  // void _openCamera() async {
-  //   // create and initialize renderer
-  //   _renderer ??= RTCVideoRenderer();
-  //   await _renderer!.initialize();
-  //
-  //   //
-  //   try {
-  //     _stream = await navigator.mediaDevices.getUserMedia({
-  //       'audio': false,
-  //       'video': true,
-  //     });
-  //   } catch (e) {
-  //     //if you get an error, please check the permissions in the project settings.
-  //     print(e.toString());
-  //   }
-  //
-  //   // set the MediaStream to the video renderer
-  //   _renderer!.srcObject = _stream;
-  //   setState(() {});
-  // }
-
   void _streamCam() {
-    if (selectedItem == null) return;
-    print("value: $selectedItem");
-    streamCamera(id: int.parse(selectedItem!));
+    if (_selectedItem == null) return;
+    print("value: $_selectedItem");
+    setState(() {
+      _camStream = streamCamera(id: int.parse(_selectedItem!));
+    });
+  }
+
+  Future<ui.Image> _createImage(Uint8List rgba) async {
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      rgba,
+      640,
+      480,
+      ui.PixelFormat.rgba8888,
+      completer.complete,
+    );
+    return completer.future;
   }
 
   @override
@@ -87,14 +79,6 @@ class _CamAreaState extends State<CamArea> {
           width = height * aspectRatio;
         }
 
-        // Uint8List? image;
-        //
-        // try {
-        //   image = getImage(file: "/tmp/test.jpg");
-        // } catch (e) {
-        //   print(e);
-        // }
-
         // limit to 1280x720
         width = width.clamp(0, maxWidth);
         height = height.clamp(0, maxHeight);
@@ -105,20 +89,33 @@ class _CamAreaState extends State<CamArea> {
               Container(
                 width: width,
                 height: height,
-                color: Colors.blueGrey,
-                child: SizedBox(
-                  // render the video renderer in the widget tree
-                  child: _renderer != null
-                      ? RTCVideoView(_renderer!)
-                      : Container(),
+                color: Colors.black,
+                child: StreamBuilder(
+                  stream: _camStream,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: Text(
+                          "Waiting for webcam data.",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }
+
+                    return FutureBuilder(
+                      future: _createImage(snapshot.data!),
+                      builder: (context, snapshot) {
+                        return RawImage(
+                          image: snapshot.data!,
+                          fit: BoxFit.contain,
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                // child: FilledButton(
-                //   onPressed: _openCamera,
-                //   child: const Text("Open Camera"),
-                // ),
                 child: Wrap(
                   spacing: 10.0,
                   alignment: WrapAlignment.center,
@@ -126,10 +123,10 @@ class _CamAreaState extends State<CamArea> {
                   children: [
                     DropdownMenu(
                       width: 300,
-                      dropdownMenuEntries: dropdownList,
+                      dropdownMenuEntries: _dropdownList,
                       onSelected: (value) {
                         setState(() {
-                          selectedItem = value!;
+                          _selectedItem = value!;
                         });
                       },
                     ),

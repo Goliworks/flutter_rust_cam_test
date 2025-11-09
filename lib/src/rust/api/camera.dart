@@ -13,7 +13,7 @@ Future<void> initCams() => RustLib.instance.api.crateApiCameraInitCams();
 Future<List<Cameras>> checkForCameras() =>
     RustLib.instance.api.crateApiCameraCheckForCameras();
 
-Future<void> streamCamera({required int id}) =>
+Stream<Uint8List> streamCamera({required int id}) =>
     RustLib.instance.api.crateApiCameraStreamCamera(id: id);
 
 class Cameras {
