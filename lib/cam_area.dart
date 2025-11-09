@@ -1,9 +1,9 @@
-import 'dart:typed_data';
+// import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
+// import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
 import 'package:flutter_rust_cam_test/src/rust/api/camera.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
+// import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class CamArea extends StatefulWidget {
@@ -15,6 +15,7 @@ class CamArea extends StatefulWidget {
 
 class _CamAreaState extends State<CamArea> {
   List<DropdownMenuEntry<String>> dropdownList = [];
+  String? selectedItem;
 
   @override
   void initState() {
@@ -26,9 +27,9 @@ class _CamAreaState extends State<CamArea> {
     initCams();
 
     checkForCameras().then((List<Cameras> cams) {
-      // for (Cameras cam in cams) {
-      //   dropdownList.add(DropdownMenuEntry(label: cam.name, value: cam.id));
-      // }
+      for (Cameras cam in cams) {
+        dropdownList.add(DropdownMenuEntry(label: cam.name, value: cam.id));
+      }
       setState(() {
         dropdownList = cams.map((cam) {
           return DropdownMenuEntry(label: cam.name, value: cam.id);
@@ -38,27 +39,33 @@ class _CamAreaState extends State<CamArea> {
   }
 
   RTCVideoRenderer? _renderer;
-  MediaStream? _stream;
+  // MediaStream? _stream;
 
-  void _openCamera() async {
-    // create and initialize renderer
-    _renderer ??= RTCVideoRenderer();
-    await _renderer!.initialize();
+  // void _openCamera() async {
+  //   // create and initialize renderer
+  //   _renderer ??= RTCVideoRenderer();
+  //   await _renderer!.initialize();
+  //
+  //   //
+  //   try {
+  //     _stream = await navigator.mediaDevices.getUserMedia({
+  //       'audio': false,
+  //       'video': true,
+  //     });
+  //   } catch (e) {
+  //     //if you get an error, please check the permissions in the project settings.
+  //     print(e.toString());
+  //   }
+  //
+  //   // set the MediaStream to the video renderer
+  //   _renderer!.srcObject = _stream;
+  //   setState(() {});
+  // }
 
-    //
-    try {
-      _stream = await navigator.mediaDevices.getUserMedia({
-        'audio': false,
-        'video': true,
-      });
-    } catch (e) {
-      //if you get an error, please check the permissions in the project settings.
-      print(e.toString());
-    }
-
-    // set the MediaStream to the video renderer
-    _renderer!.srcObject = _stream;
-    setState(() {});
+  void _streamCam() {
+    if (selectedItem == null) return;
+    print("value: $selectedItem");
+    streamCamera(id: int.parse(selectedItem!));
   }
 
   @override
@@ -108,9 +115,29 @@ class _CamAreaState extends State<CamArea> {
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: FilledButton(
-                  onPressed: _openCamera,
-                  child: const Text("Open Camera"),
+                // child: FilledButton(
+                //   onPressed: _openCamera,
+                //   child: const Text("Open Camera"),
+                // ),
+                child: Wrap(
+                  spacing: 10.0,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    DropdownMenu(
+                      width: 300,
+                      dropdownMenuEntries: dropdownList,
+                      onSelected: (value) {
+                        setState(() {
+                          selectedItem = value!;
+                        });
+                      },
+                    ),
+                    FilledButton(
+                      onPressed: _streamCam,
+                      child: const Text("Open Camera"),
+                    ),
+                  ],
                 ),
               ), // add some padding)
             ],
