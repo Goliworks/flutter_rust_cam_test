@@ -50,13 +50,17 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
             .expect("Can't access camera");
         camera.open_stream().expect("Can't start camera stream");
 
+        let mut buffer = vec![0u8; 640 * 480 * 4];
+
         loop {
             match camera.frame() {
                 Ok(frame) => {
-                    let img_data = frame.decode_image::<RgbAFormat>().unwrap().to_vec();
+                    frame
+                        .decode_image_to_buffer::<RgbAFormat>(&mut buffer)
+                        .unwrap();
 
                     // Stop the loop if flutter close the stream.
-                    if sink.add(img_data).is_err() {
+                    if sink.add(buffer.clone()).is_err() {
                         break;
                     };
                 }
