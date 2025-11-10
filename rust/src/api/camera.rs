@@ -55,14 +55,21 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
                 Ok(frame) => {
                     println!("Generate frame");
                     let img_data = frame.decode_image::<RgbAFormat>().unwrap().to_vec();
+
+                    // Stop the loop if flutter close the stream.
                     if sink.add(img_data).is_err() {
                         break;
                     };
                 }
-                Err(e) => println!("Error: {e}"),
+                Err(e) => {
+                    println!("Error: {e}");
+                    thread::sleep(std::time::Duration::from_millis(33));
+                }
             }
-            thread::sleep(std::time::Duration::from_millis(33));
         }
+
+        let _ = camera.stop_stream();
+        println!("Camera thread stopped");
     });
 
     Ok(())

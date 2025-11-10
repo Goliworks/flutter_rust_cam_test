@@ -16,8 +16,8 @@ class CamArea extends StatefulWidget {
 class _CamAreaState extends State<CamArea> {
   List<DropdownMenuEntry<String>> _dropdownList = [];
   String? _selectedItem;
-
   Stream<Uint8List>? _camStream;
+  bool _isStreaming = false;
 
   @override
   void initState() {
@@ -86,34 +86,42 @@ class _CamAreaState extends State<CamArea> {
         return Center(
           child: Column(
             children: [
-              Container(
-                width: width,
-                height: height,
-                color: Colors.black,
-                child: StreamBuilder(
-                  stream: _camStream,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: Text(
-                          "Waiting for webcam data.",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      );
-                    }
+              if (_camStream != null)
+                Container(
+                  width: width,
+                  height: height,
+                  color: Colors.black,
+                  child: StreamBuilder(
+                    stream: _camStream,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                    return FutureBuilder(
-                      future: _createImage(snapshot.data!),
-                      builder: (context, snapshot) {
-                        return RawImage(
-                          image: snapshot.data!,
-                          fit: BoxFit.contain,
-                        );
-                      },
-                    );
-                  },
+                      return FutureBuilder(
+                        future: _createImage(snapshot.data!),
+                        builder: (context, snapshot) {
+                          return RawImage(
+                            image: snapshot.data!,
+                            fit: BoxFit.contain,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                )
+              else
+                Container(
+                  width: width,
+                  height: height,
+                  color: Colors.black,
+                  child: const Center(
+                    child: Text(
+                      "No camera selected.",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
-              ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Wrap(
@@ -123,6 +131,8 @@ class _CamAreaState extends State<CamArea> {
                   children: [
                     DropdownMenu(
                       width: 300,
+                      enableSearch: false,
+                      enableFilter: false,
                       dropdownMenuEntries: _dropdownList,
                       onSelected: (value) {
                         setState(() {
@@ -130,10 +140,26 @@ class _CamAreaState extends State<CamArea> {
                         });
                       },
                     ),
-                    FilledButton(
-                      onPressed: _streamCam,
-                      child: const Text("Open Camera"),
-                    ),
+                    if (_camStream == null)
+                      FilledButton(
+                        onPressed: _streamCam,
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStatePropertyAll(Colors.green),
+                        ),
+                        child: const Text("Start Camera"),
+                      )
+                    else
+                      FilledButton(
+                        onPressed: () {
+                          setState(() {
+                            _camStream = null;
+                          });
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStatePropertyAll(Colors.red),
+                        ),
+                        child: const Text("Stop Camera"),
+                      ),
                   ],
                 ),
               ), // add some padding)
