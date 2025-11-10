@@ -53,7 +53,6 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
         loop {
             match camera.frame() {
                 Ok(frame) => {
-                    println!("Generate frame");
                     let img_data = frame.decode_image::<RgbAFormat>().unwrap().to_vec();
 
                     // Stop the loop if flutter close the stream.

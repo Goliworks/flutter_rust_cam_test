@@ -17,7 +17,9 @@ class _CamAreaState extends State<CamArea> {
   List<DropdownMenuEntry<String>> _dropdownList = [];
   String? _selectedItem;
   Stream<Uint8List>? _camStream;
-  bool _isStreaming = false;
+
+  ui.Image? _currentImage;
+  StreamSubscription? _streamSubscription; // Pour gérer la souscription
 
   @override
   void initState() {
@@ -42,10 +44,11 @@ class _CamAreaState extends State<CamArea> {
 
   void _streamCam() {
     if (_selectedItem == null) return;
-    print("value: $_selectedItem");
+    final stream = streamCamera(id: int.parse(_selectedItem!));
     setState(() {
-      _camStream = streamCamera(id: int.parse(_selectedItem!));
+      _camStream = stream;
     });
+    _startListening(stream);
   }
 
   Future<ui.Image> _createImage(Uint8List rgba) async {
@@ -58,6 +61,34 @@ class _CamAreaState extends State<CamArea> {
       completer.complete,
     );
     return completer.future;
+  }
+
+  void _startListening(Stream<Uint8List> stream) {
+    _streamSubscription?.cancel();
+
+    _streamSubscription = stream.listen((Uint8List rgbaData) async {
+      final newImage = await _createImage(rgbaData);
+
+      // call setState only if the image has changed.
+      if (newImage != _currentImage) {
+        setState(() {
+          // free old image.
+          _currentImage?.dispose();
+          _currentImage = newImage;
+        });
+      }
+    });
+  }
+
+  void _stopCam() {
+    _streamSubscription?.cancel();
+    _currentImage?.dispose();
+
+    setState(() {
+      _camStream = null; // Utilisé pour gérer l'affichage des boutons
+      _currentImage =
+          null; // Force l'UI à afficher l'indicateur d'arrêt/chargement
+    });
   }
 
   @override
@@ -91,24 +122,9 @@ class _CamAreaState extends State<CamArea> {
                   width: width,
                   height: height,
                   color: Colors.black,
-                  child: StreamBuilder(
-                    stream: _camStream,
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      return FutureBuilder(
-                        future: _createImage(snapshot.data!),
-                        builder: (context, snapshot) {
-                          return RawImage(
-                            image: snapshot.data!,
-                            fit: BoxFit.contain,
-                          );
-                        },
-                      );
-                    },
-                  ),
+                  child: _currentImage != null
+                      ? RawImage(image: _currentImage, fit: BoxFit.contain)
+                      : const Center(child: CircularProgressIndicator()),
                 )
               else
                 Container(
@@ -150,11 +166,7 @@ class _CamAreaState extends State<CamArea> {
                       )
                     else
                       FilledButton(
-                        onPressed: () {
-                          setState(() {
-                            _camStream = null;
-                          });
-                        },
+                        onPressed: _stopCam,
                         style: ButtonStyle(
                           backgroundColor: WidgetStatePropertyAll(Colors.red),
                         ),
@@ -168,5 +180,12 @@ class _CamAreaState extends State<CamArea> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _streamSubscription?.cancel();
+    _currentImage?.dispose();
+    super.dispose();
   }
 }
