@@ -5,5 +5,8 @@ fn main() {
     ModelGen::new()
         .input(&file)
         .out_dir("model/")
+        .embed_states(true)
+        .half_precision(false)
+        .record_type(burn_import::onnx::RecordType::Bincode) // ← Utiliser Bincode au lieu de NamedMpk
         .run_from_script();
 }

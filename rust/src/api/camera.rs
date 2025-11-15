@@ -11,6 +11,9 @@ use my_model::Model;
 
 use crate::{api::my_model, frb_generated::StreamSink};
 
+const MASK_OFFSET_X: i32 = 30;
+const MASK_OFFSET_Y: i32 = 25;
+
 #[derive(Debug)]
 pub struct Cameras {
     pub id: String,
@@ -114,6 +117,7 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
                         resized_mask.pixels().map(|p| p[0] as f32 / 255.0).collect();
 
                     let final_image = blur_background(&buffer, &mask, 10.0);
+                    // let final_image = show_mask_overlay(&buffer, &mask);
 
                     // Stop the loop if flutter close the stream.
                     if sink.add(final_image).is_err() {
@@ -134,7 +138,7 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
     Ok(())
 }
 
-pub fn blur_background(rgba_data: &[u8], mask: &[f32], blur_sigma: f32) -> Vec<u8> {
+fn blur_background(rgba_data: &[u8], mask: &[f32], blur_sigma: f32) -> Vec<u8> {
     const WIDTH: u32 = 640;
     const HEIGHT: u32 = 480;
 
@@ -147,7 +151,9 @@ pub fn blur_background(rgba_data: &[u8], mask: &[f32], blur_sigma: f32) -> Vec<u
     let mut result = image::RgbaImage::new(WIDTH, HEIGHT);
 
     for (x, y, pixel) in result.enumerate_pixels_mut() {
-        let idx = (y * WIDTH + x) as usize;
+        let mask_x = (x as i32 + MASK_OFFSET_X).clamp(0, WIDTH as i32 - 1) as u32;
+        let mask_y = (y as i32 + MASK_OFFSET_Y).clamp(0, HEIGHT as i32 - 1) as u32;
+        let idx = (mask_y * WIDTH + mask_x) as usize;
         let alpha = mask[idx];
 
         let orig = original.get_pixel(x, y);
@@ -162,4 +168,32 @@ pub fn blur_background(rgba_data: &[u8], mask: &[f32], blur_sigma: f32) -> Vec<u
     }
 
     result.into_raw()
+}
+
+// Used for debug.
+// apply green overlay on the mask.
+fn show_mask_overlay(rgba_data: &[u8], mask: &[f32]) -> Vec<u8> {
+    const WIDTH: i32 = 640;
+    const HEIGHT: i32 = 480;
+
+    let mut result = rgba_data.to_vec();
+
+    for i in 0..(WIDTH * HEIGHT) as usize {
+        let x = (i as i32) % WIDTH;
+        let y = (i as i32) / WIDTH;
+
+        let mask_x = (x + MASK_OFFSET_X).clamp(0, WIDTH - 1);
+        let mask_y = (y + MASK_OFFSET_Y).clamp(0, HEIGHT - 1);
+        let mask_idx = (mask_y * WIDTH + mask_x) as usize;
+        let mask_val = mask[mask_idx];
+
+        if mask_val > 0.5 {
+            let idx = i * 4;
+            result[idx] = (result[idx] as f32 * 0.5) as u8;
+            result[idx + 1] = ((result[idx + 1] as f32 * 0.5) + 127.0) as u8;
+            result[idx + 2] = (result[idx + 2] as f32 * 0.5) as u8;
+        }
+    }
+
+    result
 }
