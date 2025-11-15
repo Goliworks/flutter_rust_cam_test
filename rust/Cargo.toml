@@ -7,8 +7,15 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
+burn = { version = "0.19.1", features = ["wgpu"] }
+burn-ndarray = "0.19.1"
 flutter_rust_bridge = "=2.11.1"
+image = "0.25.8"
 nokhwa = { version = "0.10", features = ["input-native", "output-wgpu"] }
+tokio-macros = { version = "2.6.0" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+[build-dependencies]
+burn-import = "~0.19"

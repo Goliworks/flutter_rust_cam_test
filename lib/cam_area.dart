@@ -85,9 +85,8 @@ class _CamAreaState extends State<CamArea> {
     _currentImage?.dispose();
 
     setState(() {
-      _camStream = null; // Utilisé pour gérer l'affichage des boutons
-      _currentImage =
-          null; // Force l'UI à afficher l'indicateur d'arrêt/chargement
+      _camStream = null;
+      _currentImage = null;
     });
   }
 
