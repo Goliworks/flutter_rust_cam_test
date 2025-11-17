@@ -1,8 +1,12 @@
-use std::thread;
+use std::{
+    sync::{atomic::AtomicBool, Arc, Mutex},
+    thread,
+};
 
 use nokhwa::{
     pixel_format::RgbAFormat,
     utils::{RequestedFormat, RequestedFormatType},
+    Buffer,
 };
 
 use crate::frb_generated::StreamSink;
@@ -38,6 +42,12 @@ pub fn check_for_cameras() -> Vec<Cameras> {
 }
 
 pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::Error> {
+    let latest_frame = Arc::new(Mutex::new(None::<Buffer>));
+    let frame_for_capture = latest_frame.clone();
+
+    let should_run = Arc::new(AtomicBool::new(true));
+    let should_run_capture = should_run.clone();
+
     thread::spawn(move || {
         let requested = RequestedFormat::new::<RgbAFormat>(RequestedFormatType::Closest(
             nokhwa::utils::CameraFormat::new(
@@ -51,35 +61,55 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
             .expect("Can't access camera");
         camera.open_stream().expect("Can't start camera stream");
 
-        let mut buffer = vec![0u8; 640 * 480 * 4];
-        let is = ImageSegmentation::init();
-        loop {
+        while should_run_capture.load(std::sync::atomic::Ordering::Relaxed) {
             match camera.frame() {
                 Ok(frame) => {
-                    println!("Frame");
-                    frame
-                        .decode_image_to_buffer::<RgbAFormat>(&mut buffer)
-                        .unwrap();
-
-                    let mask = is.create_mask(buffer.clone());
-
-                    let final_image = blur_background(&buffer, &mask, 10.0);
-                    // let final_image = show_mask_overlay(&buffer, &mask);
-
-                    // Stop the loop if flutter close the stream.
-                    if sink.add(final_image).is_err() {
-                        break;
-                    };
+                    let mut slot = frame_for_capture.lock().unwrap();
+                    *slot = Some(frame);
                 }
                 Err(e) => {
-                    println!("Error: {e}");
+                    eprintln!("Error: {e}");
                     thread::sleep(std::time::Duration::from_millis(33));
                 }
             }
         }
-
         let _ = camera.stop_stream();
         println!("Camera thread stopped");
+    });
+
+    let frame_for_processing = latest_frame.clone();
+
+    thread::spawn(move || {
+        let mut buffer = vec![0u8; 640 * 480 * 4];
+        let is = ImageSegmentation::init();
+
+        while should_run.load(std::sync::atomic::Ordering::Relaxed) {
+            let frame_opt = {
+                let mut slot = frame_for_processing.lock().unwrap();
+                slot.take()
+            };
+
+            let Some(frame) = frame_opt else {
+                thread::sleep(std::time::Duration::from_millis(5));
+                continue;
+            };
+
+            frame
+                .decode_image_to_buffer::<RgbAFormat>(&mut buffer)
+                .unwrap();
+
+            let mask = is.create_mask(buffer.clone());
+
+            let final_image = blur_background(&buffer, &mask, 10.0);
+            // let final_image = show_mask_overlay(&buffer, &mask);
+
+            // Stop the loop if flutter close the stream.
+            if sink.add(final_image).is_err() {
+                should_run.store(false, std::sync::atomic::Ordering::Relaxed);
+                break;
+            };
+        }
+        println!("Processing thread stopped");
     });
 
     Ok(())

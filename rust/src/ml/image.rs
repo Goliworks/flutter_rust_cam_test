@@ -3,8 +3,8 @@ use burn_ndarray::{NdArray, NdArrayDevice};
 
 use super::my_model::Model;
 
-const MASK_OFFSET_X: i32 = 30;
-const MASK_OFFSET_Y: i32 = 25;
+const MASK_OFFSET_X: i32 = 25;
+const MASK_OFFSET_Y: i32 = 20;
 const MODEL_SIZE: u32 = 256;
 
 pub struct ImageSegmentation {
