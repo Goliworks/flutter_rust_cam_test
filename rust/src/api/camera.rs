@@ -1,5 +1,5 @@
 use std::{
-    sync::{atomic::AtomicBool, Arc, Mutex},
+    sync::{atomic::AtomicBool, Arc, Mutex, OnceLock},
     thread,
 };
 
@@ -39,6 +39,21 @@ pub fn check_for_cameras() -> Vec<Cameras> {
         Err(e) => println!("Error: {e}"),
     }
     cams
+}
+
+struct CameraState {
+    mask: Arc<AtomicBool>,
+}
+
+static CAMERA_STATE: OnceLock<Arc<CameraState>> = OnceLock::new();
+
+pub fn set_mask(mask: bool) {
+    let state = CAMERA_STATE.get_or_init(|| {
+        Arc::new(CameraState {
+            mask: Arc::new(AtomicBool::new(mask)),
+        })
+    });
+    state.mask.store(mask, std::sync::atomic::Ordering::Relaxed);
 }
 
 pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::Error> {
@@ -98,9 +113,19 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
                 .decode_image_to_buffer::<RgbAFormat>(&mut buffer)
                 .unwrap();
 
-            let mask = is.create_mask(buffer.clone());
+            let has_mask = CAMERA_STATE
+                .get()
+                .unwrap()
+                .mask
+                .load(std::sync::atomic::Ordering::Relaxed);
 
-            let final_image = blur_background(&buffer, &mask, 10.0);
+            let mut final_image: Vec<u8>;
+            if has_mask {
+                let mask = is.create_mask(buffer.clone());
+                final_image = blur_background(&buffer, &mask, 10.0);
+            } else {
+                final_image = buffer.clone();
+            }
             // let final_image = show_mask_overlay(&buffer, &mask);
 
             // Stop the loop if flutter close the stream.

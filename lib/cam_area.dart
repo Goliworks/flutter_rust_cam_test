@@ -21,6 +21,8 @@ class _CamAreaState extends State<CamArea> {
   ui.Image? _currentImage;
   StreamSubscription? _streamSubscription; // Pour gérer la souscription
 
+  bool _hasMask = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +46,7 @@ class _CamAreaState extends State<CamArea> {
 
   void _streamCam() {
     if (_selectedItem == null) return;
+    setMask(mask: _hasMask);
     final stream = streamCamera(id: int.parse(_selectedItem!));
     setState(() {
       _camStream = stream;
@@ -88,6 +91,13 @@ class _CamAreaState extends State<CamArea> {
       _camStream = null;
       _currentImage = null;
     });
+  }
+
+  void _changeMask(bool mask) {
+    setState(() {
+      _hasMask = mask;
+    });
+    setMask(mask: mask);
   }
 
   @override
@@ -174,6 +184,18 @@ class _CamAreaState extends State<CamArea> {
                   ],
                 ),
               ), // add some padding)
+              Wrap(
+                spacing: 10.0,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Checkbox(
+                    value: _hasMask,
+                    onChanged: (value) => _changeMask(value!),
+                  ),
+                  const Text("Blur background"),
+                ],
+              ),
             ],
           ),
         );
