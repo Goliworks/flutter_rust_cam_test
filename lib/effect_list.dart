@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_rust_cam_test/custom_button.dart';
 import 'package:flutter_rust_cam_test/effets_model.dart';
@@ -17,10 +18,11 @@ class EffectList extends StatelessWidget {
   }
 
   Future<void> _background(String imageName) async {
-    final File imgFile = File("assets/images/$imageName.jpg");
-    final data = await imgFile.readAsBytes();
+    final data = await rootBundle.load("assets/images/$imageName.jpg");
+    final buffer = data.buffer.asUint8List();
+
     final effects = EffectsModel();
-    effects.background = data;
+    effects.background = buffer;
     onChanged(effects);
   }
 
