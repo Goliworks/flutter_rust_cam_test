@@ -16,8 +16,8 @@ class EffectList extends StatelessWidget {
     onChanged(effects);
   }
 
-  Future<void> _background(String imagePath) async {
-    final File imgFile = File(imagePath);
+  Future<void> _background(String imageName) async {
+    final File imgFile = File("assets/images/$imageName.jpg");
     final data = await imgFile.readAsBytes();
     final effects = EffectsModel();
     effects.background = data;
@@ -37,8 +37,16 @@ class EffectList extends StatelessWidget {
         CustomButton(onPressed: _noEffect, text: "No effect"),
         CustomButton(onPressed: _blur, text: "Blur"),
         CustomButton(
-          onPressed: () => _background("assets/images/mountains.jpg"),
+          onPressed: () => _background("mountains"),
           imagePath: "assets/images/mountains.jpg",
+        ),
+        CustomButton(
+          onPressed: () => _background("office"),
+          imagePath: "assets/images/office.jpg",
+        ),
+        CustomButton(
+          onPressed: () => _background("city"),
+          imagePath: "assets/images/city.jpg",
         ),
       ],
     );

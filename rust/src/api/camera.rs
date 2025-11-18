@@ -157,7 +157,7 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
             let mut final_image: Vec<u8>;
             if has_mask {
                 let mask = is.create_mask(buffer.clone());
-                final_image = blur_background(&buffer, &mask, 10.0);
+                final_image = blur_background(&buffer, &mask, 12.0);
             } else if let Some(background) = background {
                 let mask = is.create_mask(buffer.clone());
                 final_image = mix_background(&buffer, &background, &mask);
