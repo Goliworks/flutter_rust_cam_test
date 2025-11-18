@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_cam_test/effect_list.dart';
 // import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
 import 'package:flutter_rust_cam_test/src/rust/api/camera.dart';
 // import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
@@ -22,6 +23,7 @@ class _CamAreaState extends State<CamArea> {
   StreamSubscription? _streamSubscription; // Pour gérer la souscription
 
   bool _hasMask = false;
+  bool _debugMode = false;
 
   @override
   void initState() {
@@ -184,16 +186,22 @@ class _CamAreaState extends State<CamArea> {
                   ],
                 ),
               ), // add some padding)
+              EffectList(onChanged: (val) => _changeMask(val)),
               Wrap(
                 spacing: 10.0,
                 alignment: WrapAlignment.center,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Checkbox(
-                    value: _hasMask,
-                    onChanged: (value) => _changeMask(value!),
+                    value: _debugMode,
+                    onChanged: (value) => {
+                      setState(() {
+                        _debugMode = value!;
+                      }),
+                      print("debug mode $_debugMode"),
+                    },
                   ),
-                  const Text("Blur background"),
+                  const Text("Debug mode"),
                 ],
               ),
             ],
