@@ -11,7 +11,7 @@ use nokhwa::{
 };
 
 use crate::ml::image::{blur_background, show_mask_overlay, ImageSegmentation};
-use crate::{frb_generated::StreamSink, ml::image::mix_background};
+use crate::{frb_generated::StreamSink, ml::image::replace_background};
 
 #[derive(Debug)]
 pub struct Cameras {
@@ -160,7 +160,7 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
                 final_image = blur_background(&buffer, &mask, 12.0);
             } else if let Some(background) = background {
                 let mask = is.create_mask(buffer.clone());
-                final_image = mix_background(&buffer, &background, &mask);
+                final_image = replace_background(&buffer, &background, &mask);
             } else {
                 final_image = buffer.clone();
             }

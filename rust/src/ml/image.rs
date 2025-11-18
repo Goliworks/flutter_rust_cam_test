@@ -67,62 +67,50 @@ pub fn blur_background(rgba_data: &[u8], mask: &[f32], blur_sigma: f32) -> Vec<u
     const HEIGHT: u32 = 480;
     let original = image::RgbaImage::from_raw(WIDTH, HEIGHT, rgba_data.to_vec())
         .expect("Invalid image dimensions");
-
     let blurred = image::imageops::blur(&original, blur_sigma);
 
-    // blend the original image with the blurred image.
-    let mut result = image::RgbaImage::new(WIDTH, HEIGHT);
-
-    for (x, y, pixel) in result.enumerate_pixels_mut() {
-        let mask_x = (x as i32 + MASK_OFFSET_X).clamp(0, WIDTH as i32 - 1) as u32;
-        let mask_y = (y as i32 + MASK_OFFSET_Y).clamp(0, HEIGHT as i32 - 1) as u32;
-        let idx = (mask_y * WIDTH + mask_x) as usize;
-        let alpha = mask[idx];
-
-        let orig = original.get_pixel(x, y);
-        let blur = blurred.get_pixel(x, y);
-
-        *pixel = image::Rgba([
-            ((orig[0] as f32 * alpha) + (blur[0] as f32 * (1.0 - alpha))) as u8,
-            ((orig[1] as f32 * alpha) + (blur[1] as f32 * (1.0 - alpha))) as u8,
-            ((orig[2] as f32 * alpha) + (blur[2] as f32 * (1.0 - alpha))) as u8,
-            orig[3], // keep original alpha
-        ]);
-    }
-
-    result.into_raw()
+    blend_images(rgba_data, blurred.as_raw(), mask)
 }
 
 // note : Duplication from blur_background. to improve.
-pub fn mix_background(rgba_data: &[u8], background_rgba_data: &[u8], mask: &[f32]) -> Vec<u8> {
-    const WIDTH: u32 = 640;
-    const HEIGHT: u32 = 480;
+pub fn replace_background(rgba_data: &[u8], background_rgba_data: &[u8], mask: &[f32]) -> Vec<u8> {
+    blend_images(rgba_data, background_rgba_data, mask)
+}
 
-    let original = image::RgbaImage::from_raw(WIDTH, HEIGHT, rgba_data.to_vec())
-        .expect("Invalid image dimensions");
-    let background = image::RgbaImage::from_raw(WIDTH, HEIGHT, background_rgba_data.to_vec())
-        .expect("Invalid image dimensions");
+fn blend_images(rgba_data: &[u8], background_rgba_data: &[u8], mask: &[f32]) -> Vec<u8> {
+    const WIDTH: usize = 640;
+    const HEIGHT: usize = 480;
+    const TOTAL_PIXELS: usize = WIDTH * HEIGHT;
 
-    let mut result = image::RgbaImage::new(WIDTH, HEIGHT);
+    let mut result = vec![0u8; TOTAL_PIXELS * 4];
 
-    for (x, y, pixel) in result.enumerate_pixels_mut() {
-        let mask_x = (x as i32 + MASK_OFFSET_X).clamp(0, WIDTH as i32 - 1) as u32;
-        let mask_y = (y as i32 + MASK_OFFSET_Y).clamp(0, HEIGHT as i32 - 1) as u32;
-        let idx = (mask_y * WIDTH + mask_x) as usize;
-        let alpha = mask[idx];
+    for i in 0..TOTAL_PIXELS {
+        let x = (i % WIDTH) as i32;
+        let y = (i / WIDTH) as i32;
 
-        let orig = original.get_pixel(x, y);
-        let bg = background.get_pixel(x, y);
+        // Calculer l'index du masque avec offset
+        let mask_x = (x + MASK_OFFSET_X).clamp(0, WIDTH as i32 - 1) as usize;
+        let mask_y = (y + MASK_OFFSET_Y).clamp(0, HEIGHT as i32 - 1) as usize;
+        let mask_idx = mask_y * WIDTH + mask_x;
+        let alpha = mask[mask_idx];
+        let inv_alpha = 1.0 - alpha;
 
-        *pixel = image::Rgba([
-            ((orig[0] as f32 * alpha) + (bg[0] as f32 * (1.0 - alpha))) as u8,
-            ((orig[1] as f32 * alpha) + (bg[1] as f32 * (1.0 - alpha))) as u8,
-            ((orig[2] as f32 * alpha) + (bg[2] as f32 * (1.0 - alpha))) as u8,
-            orig[3], // keep original alpha
-        ]);
+        let pixel_idx = i * 4;
+
+        // Blending RGB (sans conversion via get_pixel)
+        result[pixel_idx] = ((rgba_data[pixel_idx] as f32 * alpha)
+            + (background_rgba_data[pixel_idx] as f32 * inv_alpha))
+            as u8;
+        result[pixel_idx + 1] = ((rgba_data[pixel_idx + 1] as f32 * alpha)
+            + (background_rgba_data[pixel_idx + 1] as f32 * inv_alpha))
+            as u8;
+        result[pixel_idx + 2] = ((rgba_data[pixel_idx + 2] as f32 * alpha)
+            + (background_rgba_data[pixel_idx + 2] as f32 * inv_alpha))
+            as u8;
+        result[pixel_idx + 3] = rgba_data[pixel_idx + 3]; // Alpha channel
     }
 
-    result.into_raw()
+    result
 }
 
 // Used for debug.
