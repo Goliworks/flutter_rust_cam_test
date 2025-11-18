@@ -91,6 +91,38 @@ pub fn blur_background(rgba_data: &[u8], mask: &[f32], blur_sigma: f32) -> Vec<u
     result.into_raw()
 }
 
+// note : Duplication from blur_background. to improve.
+pub fn mix_background(rgba_data: &[u8], background_rgba_data: &[u8], mask: &[f32]) -> Vec<u8> {
+    const WIDTH: u32 = 640;
+    const HEIGHT: u32 = 480;
+
+    let original = image::RgbaImage::from_raw(WIDTH, HEIGHT, rgba_data.to_vec())
+        .expect("Invalid image dimensions");
+    let background = image::RgbaImage::from_raw(WIDTH, HEIGHT, background_rgba_data.to_vec())
+        .expect("Invalid image dimensions");
+
+    let mut result = image::RgbaImage::new(WIDTH, HEIGHT);
+
+    for (x, y, pixel) in result.enumerate_pixels_mut() {
+        let mask_x = (x as i32 + MASK_OFFSET_X).clamp(0, WIDTH as i32 - 1) as u32;
+        let mask_y = (y as i32 + MASK_OFFSET_Y).clamp(0, HEIGHT as i32 - 1) as u32;
+        let idx = (mask_y * WIDTH + mask_x) as usize;
+        let alpha = mask[idx];
+
+        let orig = original.get_pixel(x, y);
+        let bg = background.get_pixel(x, y);
+
+        *pixel = image::Rgba([
+            ((orig[0] as f32 * alpha) + (bg[0] as f32 * (1.0 - alpha))) as u8,
+            ((orig[1] as f32 * alpha) + (bg[1] as f32 * (1.0 - alpha))) as u8,
+            ((orig[2] as f32 * alpha) + (bg[2] as f32 * (1.0 - alpha))) as u8,
+            orig[3], // keep original alpha
+        ]);
+    }
+
+    result.into_raw()
+}
+
 // Used for debug.
 // apply green overlay on the mask.
 pub fn show_mask_overlay(rgba_data: &[u8], mask: &[f32]) -> Vec<u8> {

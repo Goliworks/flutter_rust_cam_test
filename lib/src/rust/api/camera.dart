@@ -17,6 +17,9 @@ Future<List<Cameras>> checkForCameras() =>
 Future<void> setMask({required bool mask}) =>
     RustLib.instance.api.crateApiCameraSetMask(mask: mask);
 
+Future<void> setBackground({required List<int> background}) =>
+    RustLib.instance.api.crateApiCameraSetBackground(background: background);
+
 Stream<Uint8List> streamCamera({required int id}) =>
     RustLib.instance.api.crateApiCameraStreamCamera(id: id);
 

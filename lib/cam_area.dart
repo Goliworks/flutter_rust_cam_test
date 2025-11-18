@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_cam_test/effect_list.dart';
+import 'package:flutter_rust_cam_test/effets_model.dart';
 // import 'package:flutter_rust_cam_test/src/rust/api/simple.dart';
 import 'package:flutter_rust_cam_test/src/rust/api/camera.dart';
 // import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_common.dart';
@@ -95,11 +96,15 @@ class _CamAreaState extends State<CamArea> {
     });
   }
 
-  void _changeMask(bool mask) {
+  void _changeMask(EffectsModel effects) {
     setState(() {
-      _hasMask = mask;
+      _hasMask = effects.hasMask;
     });
-    setMask(mask: mask);
+    if (effects.background == null) {
+      setMask(mask: _hasMask);
+    } else {
+      setBackground(background: effects.background!);
+    }
   }
 
   @override

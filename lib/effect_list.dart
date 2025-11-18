@@ -1,13 +1,32 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_rust_cam_test/custom_button.dart';
+import 'package:flutter_rust_cam_test/effets_model.dart';
 
 class EffectList extends StatelessWidget {
   const EffectList({super.key, required this.onChanged});
 
-  final void Function(bool) onChanged;
-  void _noEffets() {
-    print("no effect");
+  final void Function(EffectsModel) onChanged;
+
+  void _blur() {
+    final effects = EffectsModel();
+    effects.hasMask = true;
+    onChanged(effects);
+  }
+
+  Future<void> _background(String imagePath) async {
+    final File imgFile = File(imagePath);
+    final data = await imgFile.readAsBytes();
+    final effects = EffectsModel();
+    effects.background = data;
+    onChanged(effects);
+  }
+
+  void _noEffect() {
+    final effects = EffectsModel();
+    onChanged(effects);
   }
 
   @override
@@ -15,10 +34,10 @@ class EffectList extends StatelessWidget {
     return Wrap(
       spacing: 10,
       children: [
-        CustomButton(onPressed: () => onChanged(false), text: "No effect"),
-        CustomButton(onPressed: () => onChanged(true), text: "Blur"),
+        CustomButton(onPressed: _noEffect, text: "No effect"),
+        CustomButton(onPressed: _blur, text: "Blur"),
         CustomButton(
-          onPressed: _noEffets,
+          onPressed: () => _background("assets/images/mountains.jpg"),
           imagePath: "assets/images/mountains.jpg",
         ),
       ],

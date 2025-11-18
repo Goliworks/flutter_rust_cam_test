@@ -3,14 +3,15 @@ use std::{
     thread,
 };
 
+use image::ImageReader;
 use nokhwa::{
     pixel_format::RgbAFormat,
     utils::{RequestedFormat, RequestedFormatType},
     Buffer,
 };
 
-use crate::frb_generated::StreamSink;
 use crate::ml::image::{blur_background, show_mask_overlay, ImageSegmentation};
+use crate::{frb_generated::StreamSink, ml::image::mix_background};
 
 #[derive(Debug)]
 pub struct Cameras {
@@ -43,6 +44,7 @@ pub fn check_for_cameras() -> Vec<Cameras> {
 
 struct CameraState {
     mask: Arc<AtomicBool>,
+    background: Arc<Mutex<Option<Vec<u8>>>>,
 }
 
 static CAMERA_STATE: OnceLock<Arc<CameraState>> = OnceLock::new();
@@ -51,9 +53,34 @@ pub fn set_mask(mask: bool) {
     let state = CAMERA_STATE.get_or_init(|| {
         Arc::new(CameraState {
             mask: Arc::new(AtomicBool::new(mask)),
+            background: Arc::new(Mutex::new(None)),
         })
     });
     state.mask.store(mask, std::sync::atomic::Ordering::Relaxed);
+    state.background.lock().unwrap().take();
+}
+
+pub fn set_background(background: Vec<u8>) {
+    println!("Setting background");
+    let img = ImageReader::new(std::io::Cursor::new(&background))
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap();
+
+    let resized = img.resize_exact(640, 480, image::imageops::FilterType::Lanczos3);
+    let buf = resized.to_rgba8().into_raw();
+
+    let state = CAMERA_STATE.get_or_init(|| {
+        Arc::new(CameraState {
+            mask: Arc::new(AtomicBool::new(false)),
+            background: Arc::new(Mutex::new(Some(buf.clone()))),
+        })
+    });
+    state
+        .mask
+        .store(false, std::sync::atomic::Ordering::Relaxed);
+    state.background.lock().unwrap().replace(buf);
 }
 
 pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::Error> {
@@ -119,10 +146,21 @@ pub fn stream_camera(id: u32, sink: StreamSink<Vec<u8>>) -> Result<(), std::io::
                 .mask
                 .load(std::sync::atomic::Ordering::Relaxed);
 
+            let background = CAMERA_STATE
+                .get()
+                .unwrap()
+                .background
+                .lock()
+                .unwrap()
+                .clone();
+
             let mut final_image: Vec<u8>;
             if has_mask {
                 let mask = is.create_mask(buffer.clone());
                 final_image = blur_background(&buffer, &mask, 10.0);
+            } else if let Some(background) = background {
+                let mask = is.create_mask(buffer.clone());
+                final_image = mix_background(&buffer, &background, &mask);
             } else {
                 final_image = buffer.clone();
             }
