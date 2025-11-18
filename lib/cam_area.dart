@@ -107,6 +107,13 @@ class _CamAreaState extends State<CamArea> {
     }
   }
 
+  void _changeDebug(bool debug) {
+    setState(() {
+      _debugMode = debug;
+    });
+    setDebug(debug: _debugMode);
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -199,12 +206,7 @@ class _CamAreaState extends State<CamArea> {
                 children: [
                   Checkbox(
                     value: _debugMode,
-                    onChanged: (value) => {
-                      setState(() {
-                        _debugMode = value!;
-                      }),
-                      print("debug mode $_debugMode"),
-                    },
+                    onChanged: (value) => _changeDebug(value!),
                   ),
                   const Text("Debug mode"),
                 ],

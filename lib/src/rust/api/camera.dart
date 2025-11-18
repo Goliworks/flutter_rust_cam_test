@@ -20,6 +20,9 @@ Future<void> setMask({required bool mask}) =>
 Future<void> setBackground({required List<int> background}) =>
     RustLib.instance.api.crateApiCameraSetBackground(background: background);
 
+Future<void> setDebug({required bool debug}) =>
+    RustLib.instance.api.crateApiCameraSetDebug(debug: debug);
+
 Stream<Uint8List> streamCamera({required int id}) =>
     RustLib.instance.api.crateApiCameraStreamCamera(id: id);
 
