@@ -20,17 +20,19 @@ impl ImageSegmentation {
         }
     }
     pub fn create_mask(&self, rgba_data: Vec<u8>) -> Vec<f32> {
+        use image::DynamicImage;
+
         let rgba_img = image::RgbaImage::from_raw(640, 480, rgba_data).unwrap();
+        let rgb_img = DynamicImage::ImageRgba8(rgba_img).to_rgb8();
 
-        let rgb_img = image::RgbImage::from_fn(640, 480, |x, y| {
-            let p = rgba_img.get_pixel(x, y);
-            image::Rgb([p[0], p[1], p[2]])
-        });
+        let resized_rgb: image::RgbImage = image::imageops::resize(
+            &rgb_img,
+            MODEL_SIZE,
+            MODEL_SIZE,
+            image::imageops::FilterType::Triangle,
+        );
 
-        let resized_rgb: image::RgbImage =
-            image::imageops::resize(&rgb_img, 256, 256, image::imageops::FilterType::Triangle);
-
-        let rgb_256 = resized_rgb.clone().into_raw();
+        let rgb_256 = resized_rgb.into_raw();
 
         let normalized: Vec<f32> = rgb_256.iter().map(|&p| p as f32 / 255.0).collect();
 
