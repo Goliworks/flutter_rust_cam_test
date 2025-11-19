@@ -26,6 +26,8 @@ class _CamAreaState extends State<CamArea> {
   bool _hasMask = false;
   bool _debugMode = false;
 
+  int selectedEffect = 0;
+
   @override
   void initState() {
     super.initState();
@@ -96,9 +98,10 @@ class _CamAreaState extends State<CamArea> {
     });
   }
 
-  void _changeMask(EffectsModel effects) {
+  void _changeMask(EffectsModel effects, int e) {
     setState(() {
       _hasMask = effects.hasMask;
+      selectedEffect = e;
     });
     if (effects.background == null) {
       setMask(mask: _hasMask);
@@ -198,7 +201,10 @@ class _CamAreaState extends State<CamArea> {
                   ],
                 ),
               ), // add some padding)
-              EffectList(onChanged: (val) => _changeMask(val)),
+              EffectList(
+                onChanged: (val, e) => _changeMask(val, e),
+                selectedEffect: selectedEffect,
+              ),
               Wrap(
                 spacing: 10.0,
                 alignment: WrapAlignment.center,

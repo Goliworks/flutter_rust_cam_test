@@ -4,7 +4,14 @@ class CustomButton extends StatefulWidget {
   final String? imagePath;
   final String? text;
   final VoidCallback? onPressed;
-  const CustomButton({super.key, this.imagePath, this.text, this.onPressed});
+  final bool? selected;
+  const CustomButton({
+    super.key,
+    this.imagePath,
+    this.text,
+    this.onPressed,
+    this.selected = false,
+  });
 
   @override
   State<CustomButton> createState() => _CustomButtonState();
@@ -26,12 +33,19 @@ class _CustomButtonState extends State<CustomButton> {
           decoration: BoxDecoration(
             color: Colors.grey[300],
             border: Border.all(
-              color: _hover ? Colors.orange : Colors.grey,
+              color: widget.selected!
+                  ? Colors.green
+                  : _hover
+                  ? Colors.orange
+                  : Colors.grey,
               width: 1,
             ),
-            boxShadow: _hover
-                ? [BoxShadow(color: Colors.orange, spreadRadius: 1)]
-                : [],
+            boxShadow: [
+              if (widget.selected!)
+                BoxShadow(color: Colors.green, spreadRadius: 1)
+              else if (_hover)
+                BoxShadow(color: Colors.orange, spreadRadius: 1),
+            ],
           ),
           child: ClipRRect(
             child: Align(
